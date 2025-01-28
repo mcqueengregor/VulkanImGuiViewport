@@ -382,7 +382,7 @@ private:
 			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 			{
 				ImGui::UpdatePlatformWindows();
-				ImGui::RenderPlatformWindowsDefault();
+				//ImGui::RenderPlatformWindowsDefault();
 			}
 
 			drawFrame();
@@ -1519,7 +1519,7 @@ private:
 			attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 			// Depth attachment
 			attachments[1].format = findDepthFormat();
 			attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -2208,14 +2208,14 @@ private:
 
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
-		// VkBuffer vertexBuffers[] = {m_VertexBuffer};
-		// VkDeviceSize offsets[] = {0};
-		// vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+		VkBuffer vertexBuffers[] = {m_VertexBuffer};
+		VkDeviceSize offsets[] = {0};
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-		// vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
-		// vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+		vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
-		// vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
 		vkCmdEndRenderPass(commandBuffer);
 
@@ -2267,7 +2267,7 @@ private:
 			renderPassInfo.renderArea.extent = m_SwapChainExtent;
 
 			std::array<VkClearValue, 2> clearValues{};
-			clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+			clearValues[0].color = {{1.0f, 0.0f, 1.0f, 1.0f}};
 			clearValues[1].depthStencil = {1.0f, 0};
 
 			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -2295,7 +2295,7 @@ private:
 		}
 
 		{
-			// vkResetCommandPool(m_Device, m_ImGuiCommandPool, 0);
+			vkResetCommandPool(m_Device, m_ImGuiCommandPool, 0);
 			VkCommandBufferBeginInfo info = {};
 			info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 			info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -2313,7 +2313,7 @@ private:
 			vkCmdBeginRenderPass(m_ImGuiCommandBuffers[currentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 			// Record dear imgui primitives into command buffer
-			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_ImGuiCommandBuffers[currentFrame]);
+			//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_ImGuiCommandBuffers[currentFrame]);
 
 			vkCmdEndRenderPass(m_ImGuiCommandBuffers[currentFrame]);
 			vkEndCommandBuffer(m_ImGuiCommandBuffers[currentFrame]);
@@ -2331,7 +2331,7 @@ private:
 		submitInfo.waitSemaphoreCount = 1;
 		submitInfo.pWaitSemaphores = waitSemaphores;
 		submitInfo.pWaitDstStageMask = waitStages;
-		submitInfo.commandBufferCount = static_cast<uint32_t>(submitCommandBuffers.size());
+		submitInfo.commandBufferCount = static_cast<uint32_t>(submitCommandBuffers.size()) - 1;
 		submitInfo.pCommandBuffers = submitCommandBuffers.data();
 
 		VkSemaphore signalSemaphores[] = {m_RenderFinishedSemaphores[currentFrame]};
